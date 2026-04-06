@@ -11,7 +11,7 @@ end
 
 function M.filename()
   local name = vim.fn.expand('%:t')
-  if name == '' then return '[No Name]' end
+  if name == '' then return 'oil' end
   if vim.bo.modified then name = name .. ' [+]' end
   if vim.bo.readonly then name = name .. ' [-]' end
   return name
