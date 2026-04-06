@@ -35,35 +35,37 @@ function M.setup(user_config)
     vim.cmd('redrawstatus')
   end)
 
-  vim.o.statusline = "%{%v:lua.require('ratstat').statusline()%}"
+  local hl_start = _config.highlight and ('%#' .. _config.highlight .. '#') or ''
+  local hl_end   = _config.highlight and '%##' or ''
+  vim.o.statusline = hl_start
+    .. "%{v:lua.require('ratstat').part_left()}"
+    .. '%='
+    .. "%{v:lua.require('ratstat').part_center()}"
+    .. '%='
+    .. "%{v:lua.require('ratstat').part_right()}"
+    .. hl_end
 end
 
-function M.statusline()
+function M.part_left()
   if not _config then return '' end
+  return components.time(_config.time_format)
+end
 
+function M.part_center()
+  if not _config then return '' end
   local sep   = _config.separator
   local parts = {}
-
-  local t = components.time(_config.time_format)
-  if t ~= '' then parts[#parts + 1] = t end
-
   local branch_str = components.git_branch(_config.branch_prefix, git.get_branch())
   if branch_str ~= '' then parts[#parts + 1] = branch_str end
-
   parts[#parts + 1] = components.filename()
-
   local lsp_str = components.lsp_clients(_config.lsp_separator)
   if lsp_str ~= '' then parts[#parts + 1] = lsp_str end
+  return table.concat(parts, sep)
+end
 
-  parts[#parts + 1] = components.percent()
-
-  local line = table.concat(parts, sep)
-
-  if _config.highlight then
-    return string.format('%%#%s#%s%%##', _config.highlight, line)
-  end
-
-  return line
+function M.part_right()
+  if not _config then return '' end
+  return components.percent()
 end
 
 return M
