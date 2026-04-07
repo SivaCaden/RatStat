@@ -3,8 +3,10 @@ local M = {}
 local components = require('ratstat.components')
 local git        = require('ratstat.git')
 local timer      = require('ratstat.timer')
+local donki      = require('ratstat.donki')
 
-local _config = nil
+local _config       = nil
+local _donki_timer  = nil
 
 local defaults = {
   separator     = '  ',
@@ -28,12 +30,34 @@ function M.setup(user_config)
 
   vim.api.nvim_create_autocmd('VimLeavePre', {
     group    = group,
-    callback = function() timer.stop() end,
+    callback = function()
+      timer.stop()
+      if _donki_timer then
+        _donki_timer:stop()
+        _donki_timer:close()
+        _donki_timer = nil
+      end
+    end,
   })
 
   timer.start(1000, function()
     vim.cmd('redrawstatus')
   end)
+
+  local api_key = os.getenv('NASA_DONKI_API_KEY')
+  if api_key and api_key ~= '' then
+    donki.poll(api_key)
+    _donki_timer = vim.uv.new_timer()
+    _donki_timer:start(60000, 60000, vim.schedule_wrap(function()
+      donki.poll(api_key)
+    end))
+  end
+
+  vim.api.nvim_create_user_command('Rat', function(opts)
+    if opts.args == '-s' then
+      donki.suppress()
+    end
+  end, { nargs = 1, desc = 'RatStat commands (-s: suppress space weather warnings for today)' })
 
   local hl_start = _config.highlight and ('%#' .. _config.highlight .. '#') or ''
   local hl_end   = _config.highlight and '%##' or ''
@@ -53,6 +77,10 @@ end
 
 function M.part_center()
   if not _config then return '' end
+  local active = donki.get_active()
+  if #active > 0 then
+    return table.concat(active, _config.separator)
+  end
   local sep   = _config.separator
   local parts = {}
   local branch_str = components.git_branch(_config.branch_prefix, git.get_branch())
