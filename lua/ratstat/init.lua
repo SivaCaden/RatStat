@@ -62,7 +62,8 @@ function M.setup(user_config)
   local hl_start = _config.highlight and ('%#' .. _config.highlight .. '#') or ''
   local hl_end   = _config.highlight and '%##' or ''
   vim.o.statusline = hl_start
-    .. "%{v:lua.require('ratstat').part_left()}"
+    .. "%{v:lua.require('ratstat').part_time()}"
+    .. "%{v:lua.require('ratstat').part_warnings()}"
     .. '%='
     .. "%{v:lua.require('ratstat').part_center()}"
     .. '%='
@@ -70,14 +71,16 @@ function M.setup(user_config)
     .. hl_end
 end
 
-function M.part_left()
+function M.part_time()
   if not _config then return '' end
-  local left = components.time(_config.time_format)
+  return components.time(_config.time_format)
+end
+
+function M.part_warnings()
+  if not _config then return '' end
   local active = donki.get_active()
-  if #active > 0 then
-    left = left .. _config.separator .. table.concat(active, _config.separator)
-  end
-  return left
+  if #active == 0 then return '' end
+  return ' ' .. table.concat(active, ' ')
 end
 
 function M.part_center()
