@@ -6,7 +6,8 @@ Displays, left to right: **current time · git branch · filename · active LSP 
 
 ## Requirements
 
-Neovim 0.10+
+- Neovim 0.10+
+- A [Nerd Font](https://www.nerdfonts.com/) — required for space weather warning icons (CME, solar flare). Without one, the icons will not render correctly.
 
 ## Installation
 
