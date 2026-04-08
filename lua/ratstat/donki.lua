@@ -78,8 +78,8 @@ end
 function M.get_active()
   if _suppress_date == today() then return {} end
   local labels = {}
-  if _state.flr then labels[#labels + 1] = '󰖙 FLR' end
-  if _state.cme then labels[#labels + 1] = '󰖙 CME' end
+  if _state.flr then labels[#labels + 1] = ' 󰖙 FLR' end
+  if _state.cme then labels[#labels + 1] = ' 󰖙 CME' end
   return labels
 end
 
