@@ -72,15 +72,16 @@ end
 
 function M.part_left()
   if not _config then return '' end
-  return components.time(_config.time_format)
+  local left = components.time(_config.time_format)
+  local active = donki.get_active()
+  if #active > 0 then
+    left = left .. _config.separator .. table.concat(active, _config.separator)
+  end
+  return left
 end
 
 function M.part_center()
   if not _config then return '' end
-  local active = donki.get_active()
-  if #active > 0 then
-    return table.concat(active, _config.separator)
-  end
   local sep   = _config.separator
   local parts = {}
   local branch_str = components.git_branch(_config.branch_prefix, git.get_branch())
