@@ -4,6 +4,7 @@ local components = require('ratstat.components')
 local git        = require('ratstat.git')
 local timer      = require('ratstat.timer')
 local donki      = require('ratstat.donki')
+local colors     = require('ratstat.colors')
 
 local _config       = nil
 local _donki_timer  = nil
@@ -26,6 +27,13 @@ function M.setup(user_config)
   vim.api.nvim_create_autocmd({ 'BufEnter', 'DirChanged' }, {
     group    = group,
     callback = function() git.invalidate() end,
+  })
+
+  colors.setup()
+
+  vim.api.nvim_create_autocmd('ColorScheme', {
+    group    = group,
+    callback = function() colors.setup() end,
   })
 
   vim.api.nvim_create_autocmd('VimLeavePre', {
@@ -62,42 +70,57 @@ function M.setup(user_config)
   local hl_start = _config.highlight and ('%#' .. _config.highlight .. '#') or ''
   local hl_end   = _config.highlight and '%##' or ''
   vim.o.statusline = hl_start
-    .. "%{v:lua.require('ratstat').part_time()}"
-    .. "%{v:lua.require('ratstat').part_warnings()}"
-    .. '%='
-    .. "%{v:lua.require('ratstat').part_center()}"
-    .. '%='
-    .. "%{v:lua.require('ratstat').part_right()}"
+    .. "%{v:lua.require('ratstat').render()}"
     .. hl_end
 end
 
-function M.part_time()
+function M.render()
   if not _config then return '' end
-  return components.time(_config.time_format)
+
+  local sep       = _config.separator
+  local time_s    = components.time(_config.time_format)
+  local warn_s    = M.part_warnings()
+  local branch_s  = components.git_branch(_config.branch_prefix, git.get_branch())
+  local file_s    = components.filename()
+  local lsp_s     = components.lsp_clients(_config.lsp_separator)
+  local percent_s = components.percent()
+
+  -- Build plain center parts for accurate width measurement
+  local center_parts = {}
+  if branch_s ~= '' then center_parts[#center_parts + 1] = branch_s end
+  center_parts[#center_parts + 1] = file_s
+  if lsp_s ~= '' then center_parts[#center_parts + 1] = lsp_s end
+
+  local left_plain   = time_s .. warn_s
+  local center_plain = table.concat(center_parts, sep)
+  local right_plain  = percent_s
+
+  local total = vim.o.columns
+  local lw    = vim.fn.strdisplaywidth(left_plain)
+  local cw    = vim.fn.strdisplaywidth(center_plain)
+  local rw    = vim.fn.strdisplaywidth(right_plain)
+  local lpad  = math.max(0, math.floor((total - cw) / 2) - lw)
+  local rpad  = math.max(0, total - lw - lpad - cw - rw)
+
+  -- Assemble with colors (fixed slots: time=1, warn=2, branch=3, file=4, lsp=5, percent=6)
+  local left_col = colors.wrap(1, time_s) .. colors.wrap(2, warn_s)
+
+  local colored_center = {}
+  if branch_s ~= '' then colored_center[#colored_center + 1] = colors.wrap(3, branch_s) end
+  colored_center[#colored_center + 1] = colors.wrap(4, file_s)
+  if lsp_s ~= '' then colored_center[#colored_center + 1] = colors.wrap(5, lsp_s) end
+  local center_col = table.concat(colored_center, sep)
+
+  local right_col = colors.wrap(6, percent_s)
+
+  return left_col .. string.rep(' ', lpad) .. center_col .. string.rep(' ', rpad) .. right_col
 end
 
 function M.part_warnings()
   if not _config then return '' end
   local active = donki.get_active()
   if #active == 0 then return '' end
-  return ' ' .. table.concat(active, ' ')
-end
-
-function M.part_center()
-  if not _config then return '' end
-  local sep   = _config.separator
-  local parts = {}
-  local branch_str = components.git_branch(_config.branch_prefix, git.get_branch())
-  if branch_str ~= '' then parts[#parts + 1] = branch_str end
-  parts[#parts + 1] = components.filename()
-  local lsp_str = components.lsp_clients(_config.lsp_separator)
-  if lsp_str ~= '' then parts[#parts + 1] = lsp_str end
-  return table.concat(parts, sep)
-end
-
-function M.part_right()
-  if not _config then return '' end
-  return components.percent()
+  return table.concat(active, ' ')
 end
 
 return M
