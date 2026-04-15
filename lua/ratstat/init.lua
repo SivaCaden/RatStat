@@ -85,35 +85,17 @@ function M.render()
   local lsp_s     = components.lsp_clients(_config.lsp_separator)
   local percent_s = components.percent()
 
-  -- Build plain center parts for accurate width measurement
+  local left = colors.wrap(1, time_s) .. colors.wrap(2, warn_s)
+
   local center_parts = {}
-  if branch_s ~= '' then center_parts[#center_parts + 1] = branch_s end
-  center_parts[#center_parts + 1] = file_s
-  if lsp_s ~= '' then center_parts[#center_parts + 1] = lsp_s end
+  if branch_s ~= '' then center_parts[#center_parts + 1] = colors.wrap(3, branch_s) end
+  center_parts[#center_parts + 1] = colors.wrap(4, file_s)
+  if lsp_s ~= '' then center_parts[#center_parts + 1] = colors.wrap(5, lsp_s) end
+  local center = table.concat(center_parts, sep)
 
-  local left_plain   = time_s .. warn_s
-  local center_plain = table.concat(center_parts, sep)
-  local right_plain  = percent_s
+  local right = colors.wrap(6, percent_s)
 
-  local total = vim.o.columns
-  local lw    = vim.fn.strdisplaywidth(left_plain)
-  local cw    = vim.fn.strdisplaywidth(center_plain)
-  local rw    = vim.fn.strdisplaywidth(right_plain)
-  local lpad  = math.max(0, math.floor((total - cw) / 2) - lw)
-  local rpad  = math.max(0, total - lw - lpad - cw - rw)
-
-  -- Assemble with colors (fixed slots: time=1, warn=2, branch=3, file=4, lsp=5, percent=6)
-  local left_col = colors.wrap(1, time_s) .. colors.wrap(2, warn_s)
-
-  local colored_center = {}
-  if branch_s ~= '' then colored_center[#colored_center + 1] = colors.wrap(3, branch_s) end
-  colored_center[#colored_center + 1] = colors.wrap(4, file_s)
-  if lsp_s ~= '' then colored_center[#colored_center + 1] = colors.wrap(5, lsp_s) end
-  local center_col = table.concat(colored_center, sep)
-
-  local right_col = colors.wrap(6, percent_s)
-
-  return left_col .. string.rep(' ', lpad) .. center_col .. string.rep(' ', rpad) .. right_col
+  return left .. '%=' .. center .. '%=' .. right
 end
 
 function M.part_warnings()

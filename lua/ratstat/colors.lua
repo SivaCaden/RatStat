@@ -13,7 +13,7 @@ function M.setup()
 
   _count = 0
   for _, name in ipairs(hl_sources) do
-    local hl = vim.api.nvim_get_hl(0, { name = name, link = false })
+    local hl = vim.api.nvim_get_hl(0, { name = name, link = true })
     if hl.fg then
       _count = _count + 1
       vim.api.nvim_set_hl(0, 'RatStat' .. _count, { fg = hl.fg, bg = bg })
