@@ -67,11 +67,7 @@ function M.setup(user_config)
     end
   end, { nargs = 1, desc = 'RatStat commands (-s: suppress space weather warnings for today)' })
 
-  local hl_start = _config.highlight and ('%#' .. _config.highlight .. '#') or ''
-  local hl_end   = _config.highlight and '%##' or ''
-  vim.o.statusline = hl_start
-    .. "%{v:lua.require('ratstat').render()}"
-    .. hl_end
+  vim.o.statusline = "%!v:lua.require('ratstat').render()"
 end
 
 function M.render()
@@ -95,7 +91,11 @@ function M.render()
 
   local right = colors.wrap(6, percent_s)
 
-  return left .. '%=' .. center .. '%=' .. right
+  local result = left .. '%=' .. center .. '%=' .. right
+  if _config.highlight then
+    return '%#' .. _config.highlight .. '#' .. result .. '%##'
+  end
+  return result
 end
 
 function M.part_warnings()
