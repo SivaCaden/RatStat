@@ -30,8 +30,8 @@ end
 function M.percent()
   local cur = vim.fn.line('.')
   local last = vim.fn.line('$')
-  if last == 0 then return '0%' end
-  return math.floor(cur / last * 100) .. '%'
+  if last == 0 then return '0%%' end
+  return math.floor(cur / last * 100) .. '%%'
 end
 
 return M
