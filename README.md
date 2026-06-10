@@ -82,5 +82,22 @@ require('ratstat').setup({
   branch_prefix = ' ',       -- prepended to the git branch name
   lsp_separator = ', ',       -- joins multiple LSP client names
   highlight     = nil,        -- highlight group name, e.g. 'StatusLine'
+  api_key       = nil,        -- NASA DONKI API key (see Space Weather below)
 })
 ```
+
+## Space Weather
+
+RatStat polls NASA's [DONKI](https://api.nasa.gov/) API for active coronal mass ejections (CME) and solar flares (FLR), shown in slot 2 of the statusline.
+
+This requires a NASA API key. Get a free one at [api.nasa.gov](https://api.nasa.gov/). Pass it via `setup()`:
+
+```lua
+require('ratstat').setup({
+  api_key = 'YOUR_NASA_API_KEY',
+})
+```
+
+If `api_key` is not set, RatStat falls back to the `NASA_DONKI_API_KEY` environment variable. Without either, space weather polling is disabled (the rest of the statusline works normally).
+
+Verify your key with `:CmeTest` — it reports whether the key can reach the API.

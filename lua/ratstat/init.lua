@@ -15,6 +15,7 @@ local defaults = {
   branch_prefix = ' ',
   lsp_separator = ', ',
   highlight     = nil,
+  api_key       = nil,
 }
 
 function M.setup(user_config)
@@ -52,7 +53,7 @@ function M.setup(user_config)
     vim.cmd('redrawstatus')
   end)
 
-  local api_key = os.getenv('NASA_DONKI_API_KEY')
+  local api_key = _config.api_key or os.getenv('NASA_DONKI_API_KEY')
   if api_key and api_key ~= '' then
     donki.poll(api_key)
     _donki_timer = vim.uv.new_timer()
@@ -68,7 +69,7 @@ function M.setup(user_config)
   end, { nargs = 1, desc = 'RatStat commands (-s: suppress space weather warnings for today)' })
 
   vim.api.nvim_create_user_command('CmeTest', function()
-    local key = os.getenv('NASA_DONKI_API_KEY')
+    local key = _config.api_key or os.getenv('NASA_DONKI_API_KEY')
     donki.test(key, function(ok, message)
       vim.notify('RatStat: ' .. message, ok and vim.log.levels.INFO or vim.log.levels.WARN)
     end)
