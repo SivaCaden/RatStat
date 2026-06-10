@@ -103,6 +103,8 @@ function M.test(api_key, callback)
       cb(false, 'api_key rejected (HTTP 403)')
     elseif code == '429' then
       cb(false, 'rate limited (HTTP 429)')
+    elseif code:match('^5%d%d$') then
+      cb(false, 'NASA API unavailable (HTTP ' .. code .. ') — server-side, try again later')
     else
       cb(false, 'unexpected response (HTTP ' .. code .. ')')
     end
