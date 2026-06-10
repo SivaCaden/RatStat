@@ -67,6 +67,13 @@ function M.setup(user_config)
     end
   end, { nargs = 1, desc = 'RatStat commands (-s: suppress space weather warnings for today)' })
 
+  vim.api.nvim_create_user_command('CmeTest', function()
+    local key = os.getenv('NASA_DONKI_API_KEY')
+    donki.test(key, function(ok, message)
+      vim.notify('RatStat: ' .. message, ok and vim.log.levels.INFO or vim.log.levels.WARN)
+    end)
+  end, { desc = 'Test NASA DONKI api_key access' })
+
   vim.o.statusline = "%!v:lua.require('ratstat').render()"
 end
 

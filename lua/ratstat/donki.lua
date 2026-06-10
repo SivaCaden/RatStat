@@ -75,6 +75,40 @@ function M.poll(api_key)
   end)
 end
 
+-- Tests whether an api_key can access the DONKI API.
+-- Hits the CME endpoint and inspects the HTTP status code: 200 means the
+-- key works, 403 means it was rejected, anything else is reported verbatim.
+-- Invokes callback(ok, message) on the main loop.
+function M.test(api_key, callback)
+  local cb = vim.schedule_wrap(callback)
+  if not api_key or api_key == '' then
+    cb(false, 'no api_key set (NASA_DONKI_API_KEY)')
+    return
+  end
+
+  local end_date   = today()
+  local start_date = os.date('%Y-%m-%d', os.time() - 2 * 86400)
+  local url        = 'https://api.nasa.gov/DONKI/CME?startDate=' .. start_date
+    .. '&endDate=' .. end_date .. '&api_key=' .. api_key
+
+  vim.system({ 'curl', '-s', '-o', '/dev/null', '-w', '%{http_code}', url }, { text = true }, function(result)
+    if result.code ~= 0 then
+      cb(false, 'curl failed (exit ' .. tostring(result.code) .. ')')
+      return
+    end
+    local code = vim.trim(result.stdout or '')
+    if code == '200' then
+      cb(true, 'api_key OK (HTTP 200)')
+    elseif code == '403' then
+      cb(false, 'api_key rejected (HTTP 403)')
+    elseif code == '429' then
+      cb(false, 'rate limited (HTTP 429)')
+    else
+      cb(false, 'unexpected response (HTTP ' .. code .. ')')
+    end
+  end)
+end
+
 function M.get_active()
   if _suppress_date == today() then return {} end
   local labels = {}
